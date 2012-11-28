@@ -3,12 +3,12 @@ require 'json'
 require 'rest-client'
 
 # require our exception class
-require_relative 'crocodoc_error'
+require File.join(File.dirname(__FILE__), 'crocodoc_error')
 
 # require the different crocodoc clients
-require_relative 'crocodoc/document'
-require_relative 'crocodoc/download'
-require_relative 'crocodoc/session'
+require File.join(File.dirname(__FILE__), 'crocodoc/document')
+require File.join(File.dirname(__FILE__), 'crocodoc/download')
+require File.join(File.dirname(__FILE__), 'crocodoc/session')
 
 module Crocodoc
   # The developer's Crocodoc API token
@@ -73,10 +73,12 @@ module Crocodoc
   #   usually from JSON, but can also be a string
   # 
   # @raise [CrocodocError]
-  def self._error(error, client, method, response)
+  def self._error(error, client, method, response=nil)
     message = self.name + ': [' + error + '] ' + client + '.' + String(method) + "\r\n\r\n"
-    response = JSON.generate(response) if response.is_a? Hash
-    message += response
+    if response
+      response = JSON.generate(response) if response.is_a? Hash
+      message += response
+    end
     raise CrocodocError.new(message, error)
   end
   
@@ -114,11 +116,11 @@ module Crocodoc
     http_code = nil
     
     if post_params && post_params.length > 0
-      response = RestClient.post(url, post_params, params: get_params){|response, request, result| result }
+      response = RestClient.post(url, post_params, :params => get_params){|response, request, result| result }
       result = RestClient::Request.decode(response['content-encoding'], response.body)
       http_code = Integer(response.code)
     else
-      response = RestClient.get(url, params: get_params){|response, request, result| result }
+      response = RestClient.get(url, :params => get_params){|response, request, result| result }
       result = RestClient::Request.decode(response['content-encoding'], response.body)
       http_code = Integer(response.code)
     end
